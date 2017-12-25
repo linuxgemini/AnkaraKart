@@ -19,12 +19,12 @@ Installation
 -----------
 It is an API what do you expect.
 
-    ~/project/$ npm install --save AnkaraKart
+    ~/project/$ npm install --save ankarakart
 
 On your project:
 
 ```js
-const AnkaraKart = require("AnkaraKart");
+const AnkaraKart = require("ankarakart");
 const ankarakart = new AnkaraKart();
 ```
 
