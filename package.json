@@ -1,0 +1,28 @@
+{
+  "name": "AnkaraKart",
+  "version": "3.0.0",
+  "maintainers": [
+    {
+      "name": "linuxgemini",
+      "email": "ilteris@asenkron.com.tr"
+    }
+  ],
+  "author": "linuxgemini",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linuxgemini/AnkaraKart.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "request": "^2.83.0",
+    "request-promise-native": "^1.0.5",
+    "iconv-lite": "^0.4.19",
+    "uuid": "^3.1.0",
+    "cheerio": "^1.0.0-rc.2",
+    "moment-timezone": "^0.5.14"
+  },
+  "scripts": {
+    "install": "node DontRunMe.js"
+  },
+  "main": "./AnkaraKart"
+}
