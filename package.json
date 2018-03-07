@@ -1,6 +1,7 @@
 {
   "name": "ankarakart",
-  "version": "3.0.0",
+  "version": "4.1.0",
+  "description": "Small wrapper for the transportation card used in Ankara, AnkaraKart.",
   "maintainers": [
     {
       "name": "linuxgemini",
