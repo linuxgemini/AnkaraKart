@@ -177,9 +177,9 @@ class AnkaraKart {
 /**
  * Utilites for AnkaraKart Class.
  * @author İlteriş Eroğlu
- * @extends {AnkaraKart}
+ * @private
  */
-class utils extends AnkaraKart {
+class utils {
     /**
      * Generates config for request().
      * @param {options} options The options of the main class.
