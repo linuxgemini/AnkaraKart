@@ -1,8 +1,10 @@
 # AnkaraKart
 
+Small wrapper for the transportation card used in Ankara, AnkaraKart.
+
 Requirements
 -----------
-* [Node.js](https://nodejs.org/)
+* [Node.js](https://nodejs.org/) 8 or higher
 * An AnkaraKart
 
 Dependecies
