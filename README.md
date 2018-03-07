@@ -69,7 +69,7 @@ String, containing the credit that the card has.
 String that can be 1, (maybe) 2 or 3.
 
 * 1 is for sucessful query
-* 2 is `unknown` (**See: Unknown Data**)
+* 2 is `unknown`
 * 3 is for invalid card
 
 #### message
