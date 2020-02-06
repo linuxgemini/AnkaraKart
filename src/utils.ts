@@ -1,7 +1,5 @@
 
-import AnkaraKart from "./index"
-
-import { akUsageData, akCardData } from "./index"
+import * as AnkaraKart from "./index"
 
 import iconv from "iconv-lite"
 import moment from "moment-timezone"
@@ -34,9 +32,9 @@ interface RequestConfig {
  * @author İlteriş Eroğlu
  * @private
  */
-class utils {
-    private package: AnkaraKart
-    constructor(main: AnkaraKart) {
+class Utils {
+    private package: AnkaraKart.default
+    constructor(main: AnkaraKart.default) {
         this.package = main;
     }
     /**
@@ -48,19 +46,17 @@ class utils {
     generateConfig(ipAddress?: string, requestFunc?: string, formData?: object) {
         if (!ipAddress) throw new Error("ip address is missing");
         if (!requestFunc) throw new Error("request function is missing");
-        if ((formData && typeof (formData) !== "object")) throw new Error("form data is not an object");
+
+        let appVersion = this.package.options.appVersion;
+        let appLanguage = "tr";
+        let appGUID = this.package.options.appGUID;
+        let phoneModel = this.package.options.phoneModel;
+        let phoneOperatingSystemVersion = this.package.options.phoneOperatingSystemVersion;
+
+        let target = (this.isIPV4(ipAddress) ? `http://${ipAddress}/mbl/android` : `${ipAddress}/mbl/android`);
 
 
-        var appVersion = this.package.options.appVersion,
-            appLanguage = "tr",
-            appGUID = this.package.options.appGUID,
-            phoneModel = this.package.options.phoneModel,
-            phoneOperatingSystemVersion = this.package.options.phoneOperatingSystemVersion;
-
-        var target = (this.isIPV4(ipAddress) ? `http://${ipAddress}/mbl/android` : `${ipAddress}/mbl/android`);
-
-
-        var main: RequestConfig = {
+        let main: RequestConfig = {
             method: "POST",
             headers: {
                 "User-Agent": `EGO Genel Mudurlugu-EGO Cepte-${appVersion} ${phoneModel} ${phoneOperatingSystemVersion}`,
@@ -77,25 +73,25 @@ class utils {
         };
 
         switch (requestFunc.toLowerCase()) {
-        case "connect":
-            main.qs.FNC = "Connect";
-            main.url = `${target}/connect.asp`;
-            main.form = {
-                UID: appGUID,
-                UPS: "TRUE"
-            };
-            break;
-        case "start":
-            main.qs.FNC = "Start";
-            main.url = `${target}/connect.asp`;
-            break;
-        default:
-            main.qs.FNC = requestFunc;
-            main.url = `${target}/action.asp`;
-            if (formData) {
-                main.form = formData;
-            }
-            break;
+            case "connect":
+                main.qs.FNC = "Connect";
+                main.url = `${target}/connect.asp`;
+                main.form = {
+                    UID: appGUID,
+                    UPS: "TRUE"
+                };
+                break;
+            case "start":
+                main.qs.FNC = "Start";
+                main.url = `${target}/connect.asp`;
+                break;
+            default:
+                main.qs.FNC = requestFunc;
+                main.url = `${target}/action.asp`;
+                if (formData) {
+                    main.form = formData;
+                }
+                break;
         }
 
         return main;
@@ -114,36 +110,35 @@ class utils {
      * @param {string} type cardInfo or cardUsage
      * @param {Object} object cardObject or cardUsage((Array))
      */
-    translateToEnglish(type: string, object: akUsageData[] | akCardData) {
-        if (typeof (object) !== "object") throw new Error("not a valid object");
-        var returningUsage = [],
-            returning = {};
+    translateToEnglish(type: string, object: AnkaraKart.AKCardData | AnkaraKart.AKUsageData[] | Object): AnkaraKart.AKCardDataENG | AnkaraKart.AKUsageDataENG[] | Object {
         switch (type.toLowerCase()) {
-        case "cardinfo":
-            returning.cardNumber = object.kart,
-            returning.lastUpdated = this.convertTime("cardInfo", object.tarih),
-            returning.credit = object.bakiye,
-            returning.result = object.result,
-            returning.message = this.vocabTranslate(object.message);
-            return returning;
-        case "cardusage":
-            for (const usageData of object) {
-                var ret = {};
-                ret.cardNumber = usageData.kart_no,
-                ret.date = this.convertTime("cardUsage", usageData.tarih),
-                ret.operation = this.vocabTranslate(usageData.islem),
-                ret.carType = this.vocabTranslate(usageData.arac);
-                if (ret.carType === "Bus" || usageData.arac_no.length > 0) {
-                    ret.carNumber = usageData.arac_no,
-                    ret.carLine = usageData.hat;
+            case "cardinfo":
+                let returning: AnkaraKart.AKCardDataENG = {
+                    cardNumber: (object as AnkaraKart.AKCardData).kart,
+                    lastUpdated: this.convertTime("cardInfo", (object as AnkaraKart.AKCardData).tarih),
+                    credit: (object as AnkaraKart.AKCardData).bakiye,
+                    result: (object as AnkaraKart.AKCardData).result,
+                    message: this.vocabTranslate((object as AnkaraKart.AKCardData).message)
+                };
+                return returning;
+            case "cardusage":
+                let returningUsage = [];
+                for (const usageData of (object as AnkaraKart.AKUsageData[])) {
+                    returningUsage.push({
+                        cardNumber: usageData.kart_no,
+                        cardBackNumber: usageData.no_kart,
+                        date: this.convertTime("cardUsage", usageData.tarih),
+                        operation: this.vocabTranslate(usageData.islem),
+                        carType: this.vocabTranslate(usageData.arac),
+                        carNumber: usageData.arac_no,
+                        carLine: usageData.hat,
+                        creditSpent: usageData.dusen,
+                        creditRemaining: usageData.kalan,
+                    });
                 }
-                ret.creditSpent = usageData.dusen,
-                ret.creditRemaining = usageData.kalan;
-                returningUsage.push(ret);
-            }
-            return returningUsage;
-        default:
-            return object;
+                return (returningUsage as AnkaraKart.AKUsageDataENG[]);
+            default:
+                return object;
         }
     }
 
@@ -152,18 +147,12 @@ class utils {
      * @param {string} type cardInfo or cardUsage((object))
      * @param {string} timeStr The time string.
      */
-    convertTime(type: string, timeStr: string) {
+    convertTime(type: string, timeStr: string): Date | undefined {
         switch (type.toLowerCase()) {
             case "cardinfo":
-                var infoStr = timeStr.split(" "),
-                    infoDate = infoStr[0].split(".").reverse().join("-"),
-                    infoFinal = `${infoDate} ${infoStr[1]}`;
-                return moment.tz(infoFinal, "Europe/Istanbul").format();
+                return moment.tz(timeStr, "DD.MM.YYYY HH:mm:ss", "Europe/Istanbul").toDate();
             case "cardusage":
-                var usageStr = timeStr.split(" "),
-                    usageDate = usageStr[0].split("/").reverse().join("-"),
-                    usageFinal = `${usageDate} ${usageStr[1]}`;
-                return moment.tz(usageFinal, "Europe/Istanbul").format();
+                return moment.tz(timeStr, "DD/MM/YYYY HH:mm", "Europe/Istanbul").toDate();
         }
     }
 
@@ -237,4 +226,4 @@ class utils {
     }
 }
 
-export default utils
+export default Utils

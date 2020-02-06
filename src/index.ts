@@ -1,6 +1,9 @@
 import Utils from "./utils"
 import request from "request-promise-native"
+
+import appver from "./latestappver.json"
 import fs from "fs"
+import path from "path"
 
 interface PackageOptions {
     maximumTimeFrame: number;
@@ -13,7 +16,7 @@ interface PackageOptions {
     phoneOperatingSystemVersion?: string;
 }
 
-interface initData {
+interface Initdata {
     data: [
         {
             version: string;
@@ -37,7 +40,7 @@ interface initData {
     ]
 }
 
-interface secondData {
+interface SecondData {
     data: [
         {
             reklam_count: string;
@@ -56,7 +59,7 @@ interface secondData {
     ]
 }
 
-export interface akUsageData {
+export interface AKUsageData {
     kart_no: string;
     no_kart: string;
     tarih: string; // 01/02/2020 17:55
@@ -68,17 +71,29 @@ export interface akUsageData {
     islem: string;
 }
 
-interface akUsageDataRaw {
+export interface AKUsageDataENG {
+    cardNumber: AKUsageData["kart_no"];
+    cardBackNumber: AKUsageData["no_kart"];
+    date: Date | undefined;
+    operation: AKUsageData["islem"];
+    carType: AKUsageData["arac"];
+    carNumber: AKUsageData["arac_no"];
+    carLine: AKUsageData["hat"];
+    creditSpent: AKUsageData["dusen"];
+    creditRemaining: AKUsageData["kalan"];
+}
+
+interface AKUsageDataRaw {
     data: [
         {
-            table: akUsageData[];
+            table: AKUsageData[];
             status: "TRUE" | "FALSE";
             message: string;
         }
     ]
 }
 
-export interface akCardData {
+export interface AKCardData {
     kart: string;
     tarih: string; // 01.02.2020 17:55:00
     bakiye: string;
@@ -86,10 +101,18 @@ export interface akCardData {
     message: string;
 }
 
-interface akCardDataRaw {
+export interface AKCardDataENG {
+    cardNumber: AKCardData["kart"];
+    lastUpdated: Date | undefined;
+    credit: AKCardData["bakiye"];
+    result: AKCardData["result"];
+    message: AKCardData["message"];
+}
+
+interface AKCardDataRaw {
     data: [
         {
-            table: akCardData[];
+            table: AKCardData[];
             status: "TRUE" | "FALSE";
             message: string;
         }
@@ -98,8 +121,10 @@ interface akCardDataRaw {
 
 class AnkaraKart {
     private utils: Utils;
+    private packageLoc: string;
     public options: PackageOptions;
     constructor() {
+        this.packageLoc = __dirname;
         this.options = {
             maximumTimeFrame: 60000,
             primaryServer: "88.255.141.70",
@@ -109,8 +134,8 @@ class AnkaraKart {
         this.generateAppMetadata();
     }
     private generateAppMetadata() {
-        const lastVer = "3.1.0";
-        const phones = ["Nexus 5X", "Nexus 6P", "Galaxy C9 Pro", "GM 5 Plus d", "H2849", ""];
+        const lastVer = appver.appver;
+        const phones = ["Nexus 5X", "Nexus 6P", "Galaxy C9 Pro", "GM 5 Plus d", "H2849", "CoreBootDevice", "AndroidX86", "Switch"];
         const osVersions = ["7.0.1", "8.0.0", "8.0.1", "7.1.2", "6.0.1", "6.0", "7.0", "7.1.1", "7.1.1", "7.1"];
 
         this.options.appGUID = this.utils.guidBuilder();
@@ -126,18 +151,22 @@ class AnkaraKart {
     authorize() {
         return new Promise(async(resolve, reject) => {
             try {
-                var initalizer: Buffer = await request((this.utils.generateConfig(this.options.primaryServer, "connect") as request.OptionsWithUrl)); // tslint:disable-line
-                var initJSON: initData = this.utils.cleanParse(initalizer);
+                let initalizer: Buffer = await request((this.utils.generateConfig(this.options.primaryServer, "connect") as request.OptionsWithUrl)); // tslint:disable-line
+                let initJSON: Initdata = this.utils.cleanParse(initalizer);
 
                 if (initJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (initalizer)");
                 if (initJSON.data[0].servis !== "TRUE") throw new Error("Service on API returning false");
-                if (initJSON.data[0].version !== this.options.appVersion) throw new Error(`API has returned version ${initJSON.data[0].version} but we have ${this.options.appVersion}\nReport to developer @linuxgemini ASAP.`);
+                if (initJSON.data[0].version !== this.options.appVersion) {
+                    this.options.appVersion = initJSON.data[0].version;
+                    appver.appver = initJSON.data[0].version;
+                    fs.writeFileSync(path.join(this.packageLoc, "latestappver.json"), JSON.stringify(appver));
+                }
 
                 this.options.secondaryServer = (!initJSON.data[0].server ? this.options.primaryServer : initJSON.data[0].server);
                 this.options.askedToPrimaryAt = Date.now();
 
-                var base: Buffer = await request((this.utils.generateConfig(this.options.secondaryServer, "start") as request.OptionsWithUrl));
-                var baseJSON: secondData = this.utils.cleanParse(base);
+                let base: Buffer = await request((this.utils.generateConfig(this.options.secondaryServer, "start") as request.OptionsWithUrl));
+                let baseJSON: SecondData = this.utils.cleanParse(base);
 
                 if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (base)");
 
@@ -186,18 +215,18 @@ class AnkaraKart {
      * @param {boolean} canReturnRaw Return cardObjectRaw instead of cardObject.
      * @returns {Promise<Object>}
      */
-    getCardInfo(cardNumber: string, canReturnRaw?: boolean) {
+    getCardInfo(cardNumber: string, canReturnRaw?: boolean): Promise<AKCardDataENG | AKCardData> {
         return new Promise(async (resolve, reject) => {
             try {
-                if (typeof (cardNumber) !== "string") throw new Error("Card number must be a string.");
-                if (parseInt(cardNumber).toString().length !== 16) throw new Error("Card number must be 16 digits long.");
+                if (typeof (cardNumber) !== "string") throw new Error("Card number must be a string."); // tslint:disable-line: strict-type-predicates
+                if (parseInt(cardNumber, 10).toString().length !== 16) throw new Error("Card number must be 16 digits long.");
 
                 await this.autoAuthorize();
 
-                var base = await request((this.utils.generateConfig(this.options.secondaryServer, "AnkaraKartBakiye", {
+                let base = await request((this.utils.generateConfig(this.options.secondaryServer, "AnkaraKartBakiye", {
                     "KART": cardNumber
                 }) as request.OptionsWithUrl));
-                var baseJSON: akCardDataRaw = this.utils.cleanParse(base);
+                let baseJSON: AKCardDataRaw = this.utils.cleanParse(base);
 
                 if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (getCardInfo, baseJSON)");
                 if (baseJSON.data[0].table[0].result === "3") throw new Error("Card is invalid.");
@@ -206,8 +235,8 @@ class AnkaraKart {
                     resolve(baseJSON.data[0].table[0]);
                     return;
                 } else {
-                    var englishObj = await this.utils.translateToEnglish("cardInfo", baseJSON.data[0].table[0]);
-                    resolve(englishObj);
+                    let englishObj = this.utils.translateToEnglish("cardInfo", baseJSON.data[0].table[0]);
+                    resolve((englishObj as AKCardDataENG));
                     return;
                 }
             } catch (exp) {
@@ -223,18 +252,18 @@ class AnkaraKart {
      * @param {boolean} canReturnRaw Return cardUsageArrayRaw instead of cardUsageArray.
      * @returns {Promise<Array>}
      */
-    getCardUsage(cardNumber: string, canReturnRaw?: boolean) {
+    getCardUsage(cardNumber: string, canReturnRaw?: boolean): Promise<AKUsageDataENG[] | AKUsageData[]> {
         return new Promise(async(resolve, reject) => {
             try {
-                if (typeof (cardNumber) !== "string") throw new Error("Card number must be a string.");
-                if (parseInt(cardNumber).toString().length !== 16) throw new Error("Card number must be 16 digits long.");
+                if (typeof (cardNumber) !== "string") throw new Error("Card number must be a string."); // tslint:disable-line: strict-type-predicates
+                if (parseInt(cardNumber, 10).toString().length !== 16) throw new Error("Card number must be 16 digits long.");
 
                 await this.autoAuthorize();
 
-                var base = await request((this.utils.generateConfig(this.options.secondaryServer, "AnkaraKartKullanim", {
+                let base = await request((this.utils.generateConfig(this.options.secondaryServer, "AnkaraKartKullanim", {
                     "KART": cardNumber
                 }) as request.OptionsWithUrl));
-                var baseJSON: akUsageDataRaw = this.utils.cleanParse(base);
+                let baseJSON: AKUsageDataRaw = this.utils.cleanParse(base);
 
                 if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (getCardUsage, baseJSON)");
 
@@ -247,8 +276,8 @@ class AnkaraKart {
                     resolve(baseJSON.data[0].table);
                     return;
                 } else {
-                    var englishObj = await this.utils.translateToEnglish("cardUsage", baseJSON.data[0].table);
-                    resolve(englishObj);
+                    let englishObj = this.utils.translateToEnglish("cardUsage", baseJSON.data[0].table);
+                    resolve((englishObj as AKUsageDataENG[]));
                     return;
                 }
             } catch (exp) {
@@ -261,3 +290,4 @@ class AnkaraKart {
 }
 
 export default AnkaraKart
+export const Client = AnkaraKart;

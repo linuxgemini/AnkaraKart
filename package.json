@@ -24,8 +24,6 @@
   },
   "devDependencies": {
     "@types/uuid": "^3.4.7",
-    "@types/iconv-lite": "0.0.1",
-    "@types/moment": "^2.13.0",
     "@types/moment-timezone": "^0.5.12",
     "@types/node": "^12.0.10",
     "@types/request-promise-native": "^1.0.16",
