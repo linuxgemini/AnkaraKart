@@ -19,11 +19,26 @@
     "request-promise-native": "^1.0.5",
     "iconv-lite": "^0.4.19",
     "uuid": "^3.1.0",
-    "cheerio": "^1.0.0-rc.2",
-    "moment-timezone": "^0.5.14"
+    "moment-timezone": "^0.5.14",
+    "moment": "^2.24.0"
   },
-  "scripts": {
-    "install": "node DontRunMe.js"
+  "devDependencies": {
+    "@types/uuid": "^3.4.7",
+    "@types/iconv-lite": "0.0.1",
+    "@types/moment": "^2.13.0",
+    "@types/moment-timezone": "^0.5.12",
+    "@types/node": "^12.0.10",
+    "@types/request-promise-native": "^1.0.16",
+    "tslint": "^5.18.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.5.2"
   },
-  "main": "./AnkaraKart"
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.ts"
 }

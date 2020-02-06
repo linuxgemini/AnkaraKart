@@ -61,3 +61,5 @@ typings/
 c.json
 DO-NOT-DELETE-ME.json
 *.sublime*
+package-lock.json
+lib/
