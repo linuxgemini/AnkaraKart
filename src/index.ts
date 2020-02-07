@@ -135,7 +135,7 @@ class AnkaraKart {
     }
     private generateAppMetadata() {
         const lastVer = appver.appver;
-        const phones = ["Nexus 5X", "Nexus 6P", "Galaxy C9 Pro", "GM 5 Plus d", "H2849", "CoreBootDevice", "AndroidX86", "Switch", "Galaxy A51", ""];
+        const phones = ["Nexus 5X", "Nexus 6P", "Galaxy C9 Pro", "GM 5 Plus d", "H2849", "CoreBootDevice", "AndroidX86", "Switch", "Galaxy A51", "Tab4"];
         const osVersions = ["7.0.1", "8.0.0", "8.0.1", "7.1.2", "6.0.1", "6.0", "7.0", "7.1.1", "7.1.1", "7.1"];
 
         this.options.appGUID = this.utils.guidBuilder();
