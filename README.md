@@ -10,12 +10,11 @@ Requirements
 Dependecies
 -----------
 
-* [request](https://www.npmjs.com/package/request) *(API and Setup)*
-* [request-promise-native](https://www.npmjs.com/package/request-promise-native) *(API and Setup)*
-* [moment-timezone](https://www.npmjs.com/package/moment-timezone) *(API only)*
-* [iconv-lite](https://www.npmjs.com/package/iconv-lite) *(API only)*
-* [cheerio](https://www.npmjs.com/package/cheerio) *(Setup only)*
-* [node-uuid](https://www.npmjs.com/package/uuid) *(Setup only)*
+* [request](https://www.npmjs.com/package/request)
+* [request-promise-native](https://www.npmjs.com/package/request-promise-native)
+* [moment-timezone](https://www.npmjs.com/package/moment-timezone)
+* [iconv-lite](https://www.npmjs.com/package/iconv-lite)
+* [node-uuid](https://www.npmjs.com/package/uuid)
 
 Installation
 -----------
@@ -27,7 +26,7 @@ On your project:
 
 ```js
 const AnkaraKart = require("ankarakart");
-const ankarakart = new AnkaraKart();
+const ankarakart = new AnkaraKart.Client();
 ```
 
 Functions

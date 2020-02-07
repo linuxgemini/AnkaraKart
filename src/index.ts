@@ -74,9 +74,9 @@ export interface AKUsageData {
 export interface AKUsageDataENG {
     cardNumber: AKUsageData["kart_no"];
     cardBackNumber: AKUsageData["no_kart"];
-    date: Date | undefined;
-    operation: AKUsageData["islem"];
-    carType: AKUsageData["arac"];
+    date: Date;
+    operation: string | AKUsageData["islem"];
+    carType: string | AKUsageData["arac"];
     carNumber: AKUsageData["arac_no"];
     carLine: AKUsageData["hat"];
     creditSpent: AKUsageData["dusen"];
@@ -103,10 +103,10 @@ export interface AKCardData {
 
 export interface AKCardDataENG {
     cardNumber: AKCardData["kart"];
-    lastUpdated: Date | undefined;
+    lastUpdated: Date;
     credit: AKCardData["bakiye"];
     result: AKCardData["result"];
-    message: AKCardData["message"];
+    message: string;
 }
 
 interface AKCardDataRaw {
@@ -135,7 +135,7 @@ class AnkaraKart {
     }
     private generateAppMetadata() {
         const lastVer = appver.appver;
-        const phones = ["Nexus 5X", "Nexus 6P", "Galaxy C9 Pro", "GM 5 Plus d", "H2849", "CoreBootDevice", "AndroidX86", "Switch"];
+        const phones = ["Nexus 5X", "Nexus 6P", "Galaxy C9 Pro", "GM 5 Plus d", "H2849", "CoreBootDevice", "AndroidX86", "Switch", "Galaxy A51", ""];
         const osVersions = ["7.0.1", "8.0.0", "8.0.1", "7.1.2", "6.0.1", "6.0", "7.0", "7.1.1", "7.1.1", "7.1"];
 
         this.options.appGUID = this.utils.guidBuilder();
@@ -148,18 +148,18 @@ class AnkaraKart {
      * Connect to the endpoint and authorize.
      * @returns {Promise<true>}
      */
-    authorize() {
+    ___authorize(): Promise<true> {
         return new Promise(async(resolve, reject) => {
             try {
                 let initalizer: Buffer = await request((this.utils.generateConfig(this.options.primaryServer, "connect") as request.OptionsWithUrl)); // tslint:disable-line
                 let initJSON: Initdata = this.utils.cleanParse(initalizer);
 
-                if (initJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (initalizer)");
-                if (initJSON.data[0].servis !== "TRUE") throw new Error("Service on API returning false");
+                if (initJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (Endpoint #1)");
+                if (initJSON.data[0].servis !== "TRUE") throw new Error("Service on API returning false (Endpoint #1)");
                 if (initJSON.data[0].version !== this.options.appVersion) {
                     this.options.appVersion = initJSON.data[0].version;
                     appver.appver = initJSON.data[0].version;
-                    fs.writeFileSync(path.join(this.packageLoc, "latestappver.json"), JSON.stringify(appver));
+                    fs.writeFileSync(path.join(this.packageLoc, "latestappver.json"), JSON.stringify(appver, null, 4));
                 }
 
                 this.options.secondaryServer = (!initJSON.data[0].server ? this.options.primaryServer : initJSON.data[0].server);
@@ -168,7 +168,7 @@ class AnkaraKart {
                 let base: Buffer = await request((this.utils.generateConfig(this.options.secondaryServer, "start") as request.OptionsWithUrl));
                 let baseJSON: SecondData = this.utils.cleanParse(base);
 
-                if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (base)");
+                if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (Endpoint #2)");
 
                 resolve(true);
                 return;
@@ -183,7 +183,7 @@ class AnkaraKart {
      * Checks if the authorization interval has passed.
      * @returns {boolean}
      */
-    private authorized() {
+    private __authorized(): boolean {
         return (Date.now() - this.options.askedToPrimaryAt < this.options.maximumTimeFrame);
     }
 
@@ -191,11 +191,11 @@ class AnkaraKart {
      * Automatically authorize if the authorization interval has passed.
      * @returns {Promise<true>}
      */
-    private autoAuthorize() {
+    private __autoAuthorize(): Promise<true> {
         return new Promise(async (resolve, reject) => {
-            if (!this.authorized()) {
+            if (!this.__authorized()) {
                 try {
-                    await this.authorize();
+                    await this.___authorize();
                     resolve(true);
                     return;
                 } catch (exp) {
@@ -221,14 +221,14 @@ class AnkaraKart {
                 if (typeof (cardNumber) !== "string") throw new Error("Card number must be a string."); // tslint:disable-line: strict-type-predicates
                 if (parseInt(cardNumber, 10).toString().length !== 16) throw new Error("Card number must be 16 digits long.");
 
-                await this.autoAuthorize();
+                await this.__autoAuthorize();
 
                 let base = await request((this.utils.generateConfig(this.options.secondaryServer, "AnkaraKartBakiye", {
                     "KART": cardNumber
                 }) as request.OptionsWithUrl));
                 let baseJSON: AKCardDataRaw = this.utils.cleanParse(base);
 
-                if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (getCardInfo, baseJSON)");
+                if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (getCardInfo, Endpoint #2)");
                 if (baseJSON.data[0].table[0].result === "3") throw new Error("Card is invalid.");
 
                 if (canReturnRaw) {
@@ -258,14 +258,14 @@ class AnkaraKart {
                 if (typeof (cardNumber) !== "string") throw new Error("Card number must be a string."); // tslint:disable-line: strict-type-predicates
                 if (parseInt(cardNumber, 10).toString().length !== 16) throw new Error("Card number must be 16 digits long.");
 
-                await this.autoAuthorize();
+                await this.__autoAuthorize();
 
                 let base = await request((this.utils.generateConfig(this.options.secondaryServer, "AnkaraKartKullanim", {
                     "KART": cardNumber
                 }) as request.OptionsWithUrl));
                 let baseJSON: AKUsageDataRaw = this.utils.cleanParse(base);
 
-                if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (getCardUsage, baseJSON)");
+                if (baseJSON.data[0].status !== "TRUE") throw new Error("Status on API returning false (getCardUsage, Endpoint #2)");
 
                 if (baseJSON.data[0].table.length === 0) {
                     resolve([]);

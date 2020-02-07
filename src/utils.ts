@@ -147,12 +147,14 @@ class Utils {
      * @param {string} type cardInfo or cardUsage((object))
      * @param {string} timeStr The time string.
      */
-    convertTime(type: string, timeStr: string): Date | undefined {
+    convertTime(type: string, timeStr: string): Date {
         switch (type.toLowerCase()) {
             case "cardinfo":
                 return moment.tz(timeStr, "DD.MM.YYYY HH:mm:ss", "Europe/Istanbul").toDate();
             case "cardusage":
                 return moment.tz(timeStr, "DD/MM/YYYY HH:mm", "Europe/Istanbul").toDate();
+            default:
+                return new Date();
         }
     }
 
