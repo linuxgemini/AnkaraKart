@@ -1,0 +1,14 @@
+{
+    "entryPoints": [
+        "./src/"
+    ],
+    "exclude": [
+        "./src/utils.ts",
+        "./src/index.ts"
+    ],
+    "out": "docs/",
+    "excludeProtected": true,
+    "excludePrivate": true,
+    "excludeTags": true,
+    "readme": "none"
+  }

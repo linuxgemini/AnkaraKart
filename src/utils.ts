@@ -1,30 +1,19 @@
 
-import * as AnkaraKart from "./index"
+import * as AnkaraKart from "./AnkaraKart";
 
-import iconv from "iconv-lite"
-import moment from "moment-timezone"
-import guidGen from "uuid/v4"
+import { URL, URLSearchParams } from "url";
+import iconv from "iconv-lite";
+import moment from "moment-timezone";
+import { v4 as guidGen } from "uuid";
 
 interface RequestConfig {
     method: "POST";
-    url?: string;
     headers: {
         "User-Agent": string;
         "Connection": "keep-alive";
         "content-type": "application/x-www-form-urlencoded";
     };
-    qs: {
-        SID: string;
-        VER: string | undefined;
-        LAN: string;
-        UID: string | undefined;
-        FNC?: string;
-    };
-    form?: {
-        UID: string | null;
-        UPS: "TRUE";
-    } | object;
-    encoding: null;
+    body?: URLSearchParams;
 }
 
 /**
@@ -33,28 +22,60 @@ interface RequestConfig {
  * @private
  */
 class Utils {
-    private package: AnkaraKart.default
-    constructor(main: AnkaraKart.default) {
+    private package: AnkaraKart.AnkaraKart;
+
+    constructor(main: AnkaraKart.AnkaraKart) {
         this.package = main;
     }
+
+    generateURL(ipAddress: string, requestFunc: string): URL {
+        let target = (this.isIPV4(ipAddress) ? `http://${ipAddress}/mbl/android` : `${ipAddress}/mbl/android`);
+        
+        const appVersion = this.package.options.appVersion;
+        const appLanguage = "tr";
+        const appGUID = this.package.options.appGUID;
+
+        let params = {
+            SID: Math.random().toString(),
+            VER: appVersion,
+            LAN: appLanguage,
+            UID: appGUID,
+            FNC: ""
+        };
+
+        switch (requestFunc.toLowerCase()) {
+            case "connect":
+                params.FNC = "Connect";
+                target = `${target}/connect.asp`;
+                break;
+            case "start":
+                params.FNC = "Start";
+                target = `${target}/connect.asp`;
+                break;
+            default:
+                params.FNC = requestFunc;
+                target = `${target}/action.asp`;
+                break;
+        }
+
+        let targetURL = new URL(target);
+
+        targetURL.search = new URLSearchParams(params).toString();
+
+        return targetURL;
+    }
+
     /**
      * Generates config for request().
      * @param {string} ipAddress The target (IP) address.
      * @param {string} requestFunc The function to request.
      * @param {object} formData The form data of the function.
      */
-    generateConfig(ipAddress?: string, requestFunc?: string, formData?: object) {
-        if (!ipAddress) throw new Error("ip address is missing");
-        if (!requestFunc) throw new Error("request function is missing");
-
+    generateConfig(requestFunc: string, formData: {} = {}) {
         let appVersion = this.package.options.appVersion;
-        let appLanguage = "tr";
         let appGUID = this.package.options.appGUID;
         let phoneModel = this.package.options.phoneModel;
         let phoneOperatingSystemVersion = this.package.options.phoneOperatingSystemVersion;
-
-        let target = (this.isIPV4(ipAddress) ? `http://${ipAddress}/mbl/android` : `${ipAddress}/mbl/android`);
-
 
         let main: RequestConfig = {
             method: "POST",
@@ -62,34 +83,21 @@ class Utils {
                 "User-Agent": `EGO Genel Mudurlugu-EGO Cepte-${appVersion} ${phoneModel} ${phoneOperatingSystemVersion}`,
                 "Connection": "keep-alive",
                 "content-type": "application/x-www-form-urlencoded"
-            },
-            qs: {
-                SID: Math.random().toString(),
-                VER: appVersion,
-                LAN: appLanguage,
-                UID: appGUID
-            },
-            encoding: null
+            }
         };
 
         switch (requestFunc.toLowerCase()) {
             case "connect":
-                main.qs.FNC = "Connect";
-                main.url = `${target}/connect.asp`;
-                main.form = {
+                main.body = new URLSearchParams({
                     UID: appGUID,
                     UPS: "TRUE"
-                };
+                });
                 break;
             case "start":
-                main.qs.FNC = "Start";
-                main.url = `${target}/connect.asp`;
                 break;
             default:
-                main.qs.FNC = requestFunc;
-                main.url = `${target}/action.asp`;
                 if (formData) {
-                    main.form = formData;
+                    main.body = new URLSearchParams(formData);
                 }
                 break;
         }

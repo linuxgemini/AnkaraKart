@@ -1,7 +1,13 @@
 {
   "name": "ankarakart",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "description": "Small wrapper for the transportation card used in Ankara, AnkaraKart.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p .",
+    "prepublishOnly": "npm run build",
+    "gendoc": "typedoc"
+  },
   "maintainers": [
     {
       "name": "linuxgemini",
@@ -15,22 +21,24 @@
   },
   "license": "MIT",
   "dependencies": {
-    "request": "^2.83.0",
-    "request-promise-native": "^1.0.5",
-    "iconv-lite": "^0.4.19",
-    "uuid": "^3.1.0",
-    "moment-timezone": "^0.5.14",
-    "moment": "^2.24.0"
+    "node-fetch": "^2.6.1",
+    "iconv-lite": "^0.6.2",
+    "uuid": "^8.3.2",
+    "moment-timezone": "^0.5.32",
+    "moment": "^2.29.1"
   },
   "devDependencies": {
-    "@types/uuid": "^3.4.7",
-    "@types/moment-timezone": "^0.5.12",
-    "@types/node": "^12.0.10",
-    "@types/request-promise-native": "^1.0.16",
-    "tslint": "^5.18.0",
-    "tslint-config-prettier": "^1.18.0",
-    "tslint-config-standard": "^8.0.1",
-    "typescript": "^3.5.2"
+    "@types/node": "^14.14.20",
+    "@types/node-fetch": "^2.5.7",
+    "@types/uuid": "^8.3.0",
+    "@typescript-eslint/eslint-plugin": "^4.12.0",
+    "@typescript-eslint/parser": "^4.12.0",
+    "eslint": "^7.17.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsdoc": "^30.7.13",
+    "eslint-plugin-react": "^7.22.0",
+    "typescript": "^4.1.3",
+    "typedoc": "^0.20.5"
   },
   "files": [
     "lib",
